@@ -20,5 +20,9 @@ namespace dominio
         public Categoria Categoria { get; set; }
         public string Urlimg { get; set; }
         public decimal Precio { get; set; }
+        public override string ToString()
+        {
+            return Nombre;
+        }
     }
 }

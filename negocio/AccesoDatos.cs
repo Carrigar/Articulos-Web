@@ -26,6 +26,11 @@ namespace negocio
             comando.CommandType = System.Data.CommandType.Text;
             comando.CommandText = consulta;
         }
+        public void setearSp(string sp)
+        {
+            comando.CommandType = System.Data.CommandType.StoredProcedure;
+            comando.CommandText = sp;
+        }
         public void setearParametros(string nombre, object valor)
         {
             try

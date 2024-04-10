@@ -9,13 +9,18 @@ namespace negocio
 {
     public class ArticuloNegocio
     {
-        public List<Articulo> listar()
+        public List<Articulo> listar(string id = "")
         {
             List<Articulo> lista = new List<Articulo>();
             AccesoDatos datos = new AccesoDatos();
             try
             {
-                datos.setearConsulta("SELECT A.Id, A.Codigo, A.Nombre, A.Descripcion, A.IdMarca, M.Descripcion Marca, IdCategoria, C.Descripcion Categoria, A.ImagenUrl, A.Precio FROM ARTICULOS A, CATEGORIAS C, MARCAS M WHERE M.Id = A.IdMarca AND C.Id = A.IdCategoria AND A.Codigo != ''");
+                string consulta = "SELECT A.Id, A.Codigo, A.Nombre, A.Descripcion, A.IdMarca, M.Descripcion Marca, IdCategoria, C.Descripcion Categoria, A.ImagenUrl, A.Precio FROM ARTICULOS A, CATEGORIAS C, MARCAS M WHERE M.Id = A.IdMarca AND C.Id = A.IdCategoria ";
+                if (id != "")
+                {
+                    consulta += "and A.Id =  " + id;
+                }
+                datos.setearConsulta(consulta);
                 datos.ejecutarLectura();
                 while (datos.Lector.Read())
                 {
@@ -46,12 +51,115 @@ namespace negocio
                 datos.cerrarConexion();
             }
         }
+        public List<Articulo> listarInactivos()
+        {
+            List<Articulo> lista = new List<Articulo>();
+            AccesoDatos datos = new AccesoDatos();
+            try
+            {
+                string consulta = "SELECT A.Id, A.Codigo, A.Nombre, A.Descripcion, A.IdMarca, M.Descripcion Marca, IdCategoria, C.Descripcion Categoria, A.ImagenUrl, A.Precio FROM ARTICULOS A, CATEGORIAS C, MARCAS M WHERE M.Id = A.IdMarca AND C.Id = A.IdCategoria AND A.Codigo = '' ";
+                datos.setearConsulta(consulta);
+                datos.ejecutarLectura();
+                while (datos.Lector.Read())
+                {
+                    Articulo aux = new Articulo();
+                    aux.Id = (int)datos.Lector["Id"];
+                    aux.Codigo = (string)datos.Lector["Codigo"];
+                    aux.Nombre = (string)datos.Lector["Nombre"];
+                    aux.Descripcion = (string)datos.Lector["Descripcion"];
+                    aux.Marca = new Marca();
+                    aux.Marca.Id = (int)datos.Lector["IdMarca"];
+                    aux.Marca.Descripcion = (string)datos.Lector["Marca"];
+                    aux.Categoria = new Categoria();
+                    aux.Categoria.Id = (int)datos.Lector["IdCategoria"];
+                    aux.Categoria.Descripcion = (string)datos.Lector["Categoria"];
+                    aux.Urlimg = (string)datos.Lector["ImagenUrl"];
+                    aux.Precio = (decimal)datos.Lector["Precio"];
+
+                    lista.Add(aux);
+                }
+                return lista;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                datos.cerrarConexion();
+            }
+        }
+        public List<Articulo> listarConSP()
+        {
+            {
+                List<Articulo> lista = new List<Articulo>();
+                AccesoDatos datos = new AccesoDatos();
+                try
+                {
+                    //string consulta = "SELECT A.Id, A.Codigo, A.Nombre, A.Descripcion, A.IdMarca, M.Descripcion Marca, IdCategoria, C.Descripcion Categoria, A.ImagenUrl, A.Precio FROM ARTICULOS A, CATEGORIAS C, MARCAS M WHERE M.Id = A.IdMarca AND C.Id = A.IdCategoria AND A.Codigo != '' AND ";
+                    //datos.setearConsulta(consulta);
+                    datos.setearSp("spListar");
+                    datos.ejecutarLectura();
+                    while (datos.Lector.Read())
+                    {
+                        Articulo aux = new Articulo();
+                        aux.Id = (int)datos.Lector["Id"];
+                        aux.Codigo = (string)datos.Lector["Codigo"];
+                        aux.Nombre = (string)datos.Lector["Nombre"];
+                        aux.Descripcion = (string)datos.Lector["Descripcion"];
+                        aux.Marca = new Marca();
+                        aux.Marca.Id = (int)datos.Lector["IdMarca"];
+                        aux.Marca.Descripcion = (string)datos.Lector["Marca"];
+                        aux.Categoria = new Categoria();
+                        aux.Categoria.Id = (int)datos.Lector["IdCategoria"];
+                        aux.Categoria.Descripcion = (string)datos.Lector["Categoria"];
+                        aux.Urlimg = (string)datos.Lector["ImagenUrl"];
+                        aux.Precio = datos.Lector.GetDecimal(9);
+
+                        lista.Add(aux);
+                    }
+                    return lista;
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+                finally
+                {
+                    datos.cerrarConexion();
+                }
+            }
+        }
         public void agregar(Articulo articulo)
         {
             AccesoDatos datos = new AccesoDatos();
             try
             {
                 datos.setearConsulta("INSERT INTO ARTICULOS VALUES (@codigo, @nombre, @descripcion, @idMarca, @idCategoria, @urlImg, @precio)");
+                datos.setearParametros("@codigo", articulo.Codigo);
+                datos.setearParametros("@nombre", articulo.Nombre);
+                datos.setearParametros("@descripcion", articulo.Descripcion);
+                datos.setearParametros("@idMarca", articulo.Marca.Id);
+                datos.setearParametros("@idCategoria", articulo.Categoria.Id);
+                datos.setearParametros("@urlImg", articulo.Urlimg);
+                datos.setearParametros("@precio", articulo.Precio);
+                datos.ejecutarAccion();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                datos.cerrarConexion();
+            }
+        }
+        public void agregarConSp(Articulo articulo)
+        {
+            AccesoDatos datos = new AccesoDatos();
+            try
+            {
+                datos.setearSp("spAgregar");
                 datos.setearParametros("@codigo", articulo.Codigo);
                 datos.setearParametros("@nombre", articulo.Nombre);
                 datos.setearParametros("@descripcion", articulo.Descripcion);
@@ -95,6 +203,45 @@ namespace negocio
                 datos.cerrarConexion();
             }
         }
+        public void modificarConSp(Articulo articulo)
+        {
+            AccesoDatos datos = new AccesoDatos();
+            try
+            {
+                datos.setearSp("spModificarArticulo");
+                datos.setearParametros("@codigo", articulo.Codigo);
+                datos.setearParametros("@nombre", articulo.Nombre);
+                datos.setearParametros("@descripcion", articulo.Descripcion);
+                datos.setearParametros("@idMarca", articulo.Marca.Id);
+                datos.setearParametros("@idCategoria", articulo.Categoria.Id);
+                datos.setearParametros("@urlImg", articulo.Urlimg);
+                datos.setearParametros("@precio", articulo.Precio);
+                datos.setearParametros("@id", articulo.Id);
+                datos.ejecutarAccion();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                datos.cerrarConexion();
+            }
+        }
+        public void EliminarFisicoConSp(int id)
+        {
+            try
+            {
+                AccesoDatos datos = new AccesoDatos();
+                datos.setearSp("spEliminarFisico");
+                datos.setearParametros("@Id", id);
+                datos.ejecutarAccion();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
         public void eliminarLogico(int id)
         {
             AccesoDatos datos = new AccesoDatos();
@@ -113,7 +260,6 @@ namespace negocio
                 datos.cerrarConexion();
             }
         }
-
         public List<Articulo> filtrar(string campo, string criterio, string filtro)
         {
             List<Articulo> lista = new List<Articulo>();
@@ -140,7 +286,7 @@ namespace negocio
                         }
                         break;
 
-                    case "Categoria":
+                    case "Categoría":
                         switch (criterio)
                         {
                             case "Comienza con":
@@ -190,7 +336,7 @@ namespace negocio
                     aux.Categoria.Id = (int)datos.Lector["IdCategoria"];
                     aux.Categoria.Descripcion = (string)datos.Lector["Categoria"];
                     aux.Urlimg = (string)datos.Lector["ImagenUrl"];
-                    aux.Precio = (decimal)datos.Lector["Precio"];
+                    aux.Precio = aux.Precio = datos.Lector.GetDecimal(9);
 
                     lista.Add(aux);
                 }
@@ -199,6 +345,10 @@ namespace negocio
             catch (Exception ex)
             {
                 throw ex;
+            }
+            finally
+            {
+                datos.cerrarConexion();
             }
         }
     }
